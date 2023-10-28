@@ -2,15 +2,14 @@ package me.gorbunov;
 
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
+import org.jgrapht.Graphs;
+import org.jgrapht.alg.cycle.PatonCycleBase;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.DirectedWeightedPseudograph;
+import org.jgrapht.graph.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
+
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -63,46 +62,139 @@ public class Main {
         DefaultWeightedEdge e12 = graph.addEdge("5", "5");
         graph.setEdgeWeight(e12, 1);
 
-//        AllDirectedPaths<String, DefaultWeightedEdge> allDirectedPaths = new AllDirectedPaths<>(graph);
-//        var a = allDirectedPaths.getAllPaths("0", "4", true, null);
-//        for (GraphPath<String, DefaultWeightedEdge> b: a) {
-//            System.out.println(b);
-//            System.out.println(b.getWeight());
-//            System.out.println("**********************");
-//        }
+        GraphAnalize graphAnalize = new GraphAnalize();
 
-//        Set<DefaultWeightedEdge> edges = graph.edgeSet();
-        AllDirectedPaths<String, DefaultWeightedEdge> allPaths = new AllDirectedPaths<>(graph);
-        List<GraphPath<String, DefaultWeightedEdge>> paths = allPaths.getAllPaths(
-                "0",
-                "4",
-                false,
-                3);
-//
-//        for (GraphPath<String, DefaultWeightedEdge> path : paths) {
-//            List<DefaultWeightedEdge> edgesInPath = path.getEdgeList();
-//            path.getWeight();
-//            for (DefaultWeightedEdge edge : edgesInPath) {
-//                System.out.println(edge);
-//            }
-//        }
+        var graphCopy = graphAnalize.cloneGraph(graph);
+        System.out.println(graphCopy);
 
-//        System.out.println(paths.get(0));
+        String startVertex = "0";
+        graph.removeAllEdges(startVertex, startVertex);
+
+        var paths = graphAnalize.getListAllPaths(graph, "0", "4");
+
         Map<GraphPath<String, DefaultWeightedEdge>, Double> pathMap = new HashMap<>();
 
         for (GraphPath<String, DefaultWeightedEdge> path : paths) {
-//            System.out.println(path);
             double weightFinal = 1.0;
             List<DefaultWeightedEdge> edgesInPath = path.getEdgeList();
             for (DefaultWeightedEdge edge : edgesInPath) {
                 double weight = graph.getEdgeWeight(edge);
-//                System.out.println(edge + " " + weight);
                 weightFinal *= weight;
             }
             pathMap.put(path, weightFinal);
         }
 
-        System.out.println(pathMap);
+        ///System.out.println(pathMap);
 
+        graphAnalize.addDangerState("4");
+        graphAnalize.addDangerState("5");
+        ///System.out.println(graphAnalize.isDangerousState("5"));
+
+        // ребра и вершины на пути
+        List<String> verticesInPath = paths.stream()
+                .flatMap(p -> p.getVertexList().stream())
+                .distinct()
+                .toList();
+        List<DefaultWeightedEdge> edgesInPath = paths.stream()
+                .flatMap(p -> p.getEdgeList().stream())
+                .toList();
+
+        System.out.println(verticesInPath);
+        System.out.println(edgesInPath);
+//
+//        // Получить все вершины и ребра, которые не находятся на пути
+//        List<String> verticesNotInPath = graph.vertexSet().stream()
+//                .filter(v -> !verticesInPath.contains(v))
+//                .toList();
+//        List<DefaultWeightedEdge> edgesNotInPath = graph.edgeSet().stream()
+//                .filter(e -> !edgesInPath.contains(e))
+//                .toList();
+//
+//        System.out.println("Vertices not in path: " + verticesNotInPath);
+//        System.out.println("Edges not in path: " + edgesNotInPath);
+//
+//        Set<DefaultWeightedEdge> edgeSets = new HashSet<>(edgesNotInPath);
+
+
+        // Получить все петли в графе
+        List<DefaultWeightedEdge> allLoops = graph.edgeSet().stream()
+                .filter(e -> graph.getEdgeSource(e).equals(graph.getEdgeTarget(e)))
+                .toList();
+
+        // Определить опасные вершины
+        List<String> dangerousVertices = Arrays.asList("4", "5");
+        ArrayList<Double> weigthList = new ArrayList<>();
+
+        for (GraphPath<String, DefaultWeightedEdge> path : paths) {
+            // Получить все вершины на данном пути
+            List<String> verticesInPath1 = path.getVertexList();
+
+            // Получить все петли, которые находятся на данном пути или касаются вершин на данном пути
+            List<DefaultWeightedEdge> loopsInPath = allLoops.stream()
+                    .filter(loop -> verticesInPath1.contains(graph.getEdgeSource(loop)))
+                    .toList();
+
+            // Получить все петли, которые не находятся на данном пути и не касаются вершин на данном пути
+            List<DefaultWeightedEdge> loopsNotInPath = allLoops.stream()
+                    .filter(loop -> !loopsInPath.contains(loop) && !dangerousVertices.contains(graph.getEdgeSource(loop)))
+                    .toList();
+
+            //System.out.println("For path " + path + ", loops not in path and not touching vertices in path: " + loopsNotInPath);
+
+            for (DefaultWeightedEdge loop : loopsNotInPath) {
+                double weight = graph.getEdgeWeight(loop);
+                weigthList.add(1 - weight);
+                //System.out.println("Weight of loop " + loop + ": " + weight);
+            }
+        }
+
+
+        ArrayList<Double> mapValues = new ArrayList<>();
+        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()) {
+            mapValues.add(entry.getValue());
+        }
+
+//        System.out.println(weigthList);
+//
+//        double ans = (mapValues.get(0) * weigthList.get(1) + mapValues.get(1) * weigthList.get(0)) / 0.0315;
+//        System.out.println("P[0;4] = " + ans);
+
+    }
+
+    public static class GraphAnalize {
+        private Set<String> dangerstate = new HashSet<String>();
+
+        public void addDangerState(String name) {
+            dangerstate.add(name);
+        }
+
+        public boolean isDangerousState(String state) {
+            return dangerstate.contains(state);
+        }
+
+        public Graph<String, DefaultWeightedEdge> cloneGraph(Graph<String, DefaultWeightedEdge> original) {
+            Graph<String, DefaultWeightedEdge> graphCopy = new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
+            // Клонирование вершин
+            for (String vertex : original.vertexSet()) {
+                graphCopy.addVertex(vertex);
+            }
+
+            // Клонирование ребер
+            for (DefaultWeightedEdge edge : original.edgeSet()) {
+                DefaultWeightedEdge edgeCopy = graphCopy.addEdge(original.getEdgeSource(edge), original.getEdgeTarget(edge));
+                double weight = original.getEdgeWeight(edge);
+                graphCopy.setEdgeWeight(edgeCopy, weight);
+            }
+            return graphCopy;
+        }
+
+        public List<GraphPath<String, DefaultWeightedEdge>> getListAllPaths(Graph<String, DefaultWeightedEdge> graph, String startVertex, String targetVertex){
+            AllDirectedPaths<String, DefaultWeightedEdge> allPaths = new AllDirectedPaths<>(graph);
+            return allPaths.getAllPaths(
+                    startVertex,
+                    targetVertex,
+                    true,
+                    null);
+        }
     }
 }
