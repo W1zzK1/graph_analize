@@ -3,10 +3,12 @@ package me.gorbunov;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.cycle.PatonCycleBase;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.*;
 
+import java.text.DecimalFormat;
 import java.util.stream.Collectors;
 
 import java.util.*;
@@ -65,7 +67,6 @@ public class Main {
         GraphAnalize graphAnalize = new GraphAnalize();
 
         var graphCopy = graphAnalize.cloneGraph(graph);
-        System.out.println(graphCopy);
 
         String startVertex = "0";
         graph.removeAllEdges(startVertex, startVertex);
@@ -84,23 +85,20 @@ public class Main {
             pathMap.put(path, weightFinal);
         }
 
-        ///System.out.println(pathMap);
-
-        graphAnalize.addDangerState("4");
-        graphAnalize.addDangerState("5");
-        ///System.out.println(graphAnalize.isDangerousState("5"));
+//        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()){
+//            System.out.println(entry);
+//        }
 
         // ребра и вершины на пути
         List<String> verticesInPath = paths.stream()
                 .flatMap(p -> p.getVertexList().stream())
-                .distinct()
                 .toList();
         List<DefaultWeightedEdge> edgesInPath = paths.stream()
                 .flatMap(p -> p.getEdgeList().stream())
                 .toList();
-
-        System.out.println(verticesInPath);
-        System.out.println(edgesInPath);
+//
+//        System.out.println(verticesInPath);
+//        System.out.println(edgesInPath);
 //
 //        // Получить все вершины и ребра, которые не находятся на пути
 //        List<String> verticesNotInPath = graph.vertexSet().stream()
@@ -123,7 +121,9 @@ public class Main {
 
         // Определить опасные вершины
         List<String> dangerousVertices = Arrays.asList("4", "5");
-        ArrayList<Double> weigthList = new ArrayList<>();
+        Map<DefaultWeightedEdge, Double> weigthList = new HashMap<>();
+
+        double chislitel = 0.0;
 
         for (GraphPath<String, DefaultWeightedEdge> path : paths) {
             // Получить все вершины на данном пути
@@ -139,26 +139,112 @@ public class Main {
                     .filter(loop -> !loopsInPath.contains(loop) && !dangerousVertices.contains(graph.getEdgeSource(loop)))
                     .toList();
 
-            //System.out.println("For path " + path + ", loops not in path and not touching vertices in path: " + loopsNotInPath);
+//            System.out.println(path.getEdgeList());
+            double edgeWeight = 1.0;
+            for (var k : path.getEdgeList()){
+                edgeWeight *= graph.getEdgeWeight(k);
+            }
+
 
             for (DefaultWeightedEdge loop : loopsNotInPath) {
                 double weight = graph.getEdgeWeight(loop);
-                weigthList.add(1 - weight);
-                //System.out.println("Weight of loop " + loop + ": " + weight);
+                weigthList.put(loop, 1 - weight);
+                System.out.println("Weight of loop " + loop + " = " + weight);
+                chislitel += edgeWeight * (1 - weight);
             }
         }
 
+        /// Поиск знаменателя
+        var paths2 = graphAnalize.getListAllPaths(graphCopy, "0", "4");
+        // ребра и вершины на пути
+        List<String> verticesInPath2 = paths2.stream()
+                .flatMap(p -> p.getVertexList().stream())
+                .filter(vertex -> !dangerousVertices.contains(vertex))
+                .distinct()
+                .toList();
+        List<DefaultWeightedEdge> edgesInPath2 = paths.stream()
+                .flatMap(p -> p.getEdgeList().stream())
+                .toList();
 
-        ArrayList<Double> mapValues = new ArrayList<>();
-        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()) {
-            mapValues.add(entry.getValue());
+        // Находим все циклы в графе  с помощью алгоритма Джонсона
+        JohnsonSimpleCycles<String, DefaultWeightedEdge> cycleFinder = new JohnsonSimpleCycles<>(graphCopy);
+        List<List<String>> allCycles = cycleFinder.findSimpleCycles();
+
+        Map<List<String>, Double> cycleWeights = new HashMap<>();
+        double ans1 = 0;
+        for (List<String> cycle : allCycles) {
+            double weight = 1;
+            if (cycle.retainAll(verticesInPath2)) {
+                continue; // проверка на наличие на пути и опасное состояние.
+            }
+            for (int i = 0; i < cycle.size() - 1; i++) {
+                DefaultWeightedEdge edge = graphCopy.getEdge(cycle.get(i), cycle.get(i + 1));
+                weight *= graphCopy.getEdgeWeight(edge);
+            }
+            // Добавьте вес последнего ребра в цикле
+            DefaultWeightedEdge lastEdge = graphCopy.getEdge(cycle.get(cycle.size() - 1), cycle.get(0));
+            weight *= graphCopy.getEdgeWeight(lastEdge);
+
+            //System.out.println("Вес цикла: " + weight + " сам цикл: " + cycle);
+            cycleWeights.put(cycle, weight);
+            ans1 += weight;
+        }
+        var test = new NonTouchingCyclesFinder(cycleWeights);
+
+        double a1 = 0;
+        for (var k : test.findNonTouchingCycleGroups(2)){
+            a1 += k;
         }
 
-//        System.out.println(weigthList);
-//
-//        double ans = (mapValues.get(0) * weigthList.get(1) + mapValues.get(1) * weigthList.get(0)) / 0.0315;
-//        System.out.println("P[0;4] = " + ans);
+        double a2 = 0;
+        for (var k : test.findNonTouchingCycleGroups(3)){
+            a2 += k;
+        }
 
+        // final
+        double znamenatel = 1 - ans1 + a1 - a2;
+        System.out.println(chislitel / znamenatel);
+    }
+
+    public static class NonTouchingCyclesFinder {
+        private Map<List<String>, Double> cycleWeights;
+        private List<List<String>> cycles;
+        private List<Set<String>> cycleVertexSets;
+
+        public NonTouchingCyclesFinder(Map<List<String>, Double> cycleWeights) {
+            this.cycleWeights = cycleWeights;
+            this.cycles = new ArrayList<>(cycleWeights.keySet());
+            this.cycleVertexSets = new ArrayList<>();
+            for (List<String> cycle : cycles) {
+                this.cycleVertexSets.add(new HashSet<>(cycle));
+            }
+        }
+
+        public List<Double> findNonTouchingCycleGroups(int groupSize) {
+            List<Double> products = new ArrayList<>();
+            findNonTouchingCycleGroups(new ArrayList<>(), new HashSet<>(), 0, groupSize, products);
+            return products;
+        }
+
+        private void findNonTouchingCycleGroups(List<Integer> currentGroup, Set<String> currentVertices, int start, int groupSize, List<Double> products) {
+            if (currentGroup.size() == groupSize) {
+                double product = 1;
+                for (int index : currentGroup) {
+                    product *= cycleWeights.get(cycles.get(index));
+                }
+                products.add(product);
+            } else {
+                for (int i = start; i < cycles.size(); i++) {
+                    if (Collections.disjoint(currentVertices, cycleVertexSets.get(i))) {
+                        currentGroup.add(i);
+                        currentVertices.addAll(cycleVertexSets.get(i));
+                        findNonTouchingCycleGroups(currentGroup, currentVertices, i + 1, groupSize, products);
+                        currentGroup.remove(currentGroup.size() - 1);
+                        currentVertices.removeAll(cycleVertexSets.get(i));
+                    }
+                }
+            }
+        }
     }
 
     public static class GraphAnalize {
@@ -188,7 +274,7 @@ public class Main {
             return graphCopy;
         }
 
-        public List<GraphPath<String, DefaultWeightedEdge>> getListAllPaths(Graph<String, DefaultWeightedEdge> graph, String startVertex, String targetVertex){
+        public List<GraphPath<String, DefaultWeightedEdge>> getListAllPaths(Graph<String, DefaultWeightedEdge> graph, String startVertex, String targetVertex) {
             AllDirectedPaths<String, DefaultWeightedEdge> allPaths = new AllDirectedPaths<>(graph);
             return allPaths.getAllPaths(
                     startVertex,
