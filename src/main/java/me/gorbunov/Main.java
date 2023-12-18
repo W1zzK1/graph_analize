@@ -15,6 +15,12 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
+
+        DAO dao = new DAO();
+        dao.setConnection();
+
+
+
         Graph<String, DefaultWeightedEdge> graph = new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
 
         graph.addVertex("1");
@@ -39,8 +45,8 @@ public class Main {
         DefaultWeightedEdge e3 = graph.addEdge("2", "3");
         graph.setEdgeWeight(e3, 0.075);
 
-//        DefaultWeightedEdge e5 = graph.addEdge("2", "6");
-//        graph.setEdgeWeight(e5, 0.075);
+        DefaultWeightedEdge e5 = graph.addEdge("2", "6");
+        graph.setEdgeWeight(e5, 0.075);
 
         DefaultWeightedEdge e6 = graph.addEdge("3", "1");
         graph.setEdgeWeight(e6, 1);
