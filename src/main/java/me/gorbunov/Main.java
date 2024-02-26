@@ -1,70 +1,93 @@
 package me.gorbunov;
 
+import me.gorbunov.dto.GraphVertex;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
-import org.jgrapht.Graphs;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
-import org.jgrapht.alg.cycle.PatonCycleBase;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
-import org.jgrapht.graph.*;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.DirectedWeightedPseudograph;
 
-import java.text.DecimalFormat;
-import java.util.stream.Collectors;
-
+import java.sql.SQLException;
 import java.util.*;
 
 public class Main {
-    public static void main(String[] args) {
-
-        DAO dao = new DAO();
-        dao.setConnection();
-
-
-
+    public static void main(String[] args) throws SQLException {
         Graph<String, DefaultWeightedEdge> graph = new DirectedWeightedPseudograph<>(DefaultWeightedEdge.class);
 
-        graph.addVertex("1");
-        graph.addVertex("2");
-        graph.addVertex("3");
-        graph.addVertex("4");
-        graph.addVertex("5");
-        graph.addVertex("6");
 
-        DefaultWeightedEdge e0 = graph.addEdge("1", "1");
-        graph.setEdgeWeight(e0, 0.72);
+        DAO dao = new DAO();
+        List<GraphVertex> vertexList = dao.getAllVertex();
 
-        DefaultWeightedEdge e1 = graph.addEdge("1", "2");
-        graph.setEdgeWeight(e1, 0.18);
+        // Добавляем все вершины в граф
+        for (GraphVertex gr : vertexList) {
+            System.out.println(gr.toString());
+            graph.addVertex(Integer.toString(gr.getOut()));
+            graph.addVertex(Integer.toString(gr.getTo()));
+        }
 
-        DefaultWeightedEdge e4 = graph.addEdge("1", "4");
-        graph.setEdgeWeight(e4, 0.1);
+        // Теперь добавляем ребра
+        for (GraphVertex graphVertex : vertexList) {
+            String source = Integer.toString(graphVertex.getOut());
+            String target = Integer.toString(graphVertex.getTo());
+            double weight = graphVertex.getWeigth();
 
-        DefaultWeightedEdge e2 = graph.addEdge("2", "1");
-        graph.setEdgeWeight(e2, 0.85);
+            DefaultWeightedEdge edge = graph.getEdge(source, target);
+            if (edge == null) {
+                // Ребра не существует, добавляем новое
+                edge = graph.addEdge(source, target);
+            }
+            // Устанавливаем вес (для нового или существующего ребра)
+            graph.setEdgeWeight(edge, weight);
+        }
+//
+//        System.out.println(graph);
 
-        DefaultWeightedEdge e3 = graph.addEdge("2", "3");
-        graph.setEdgeWeight(e3, 0.075);
 
-        DefaultWeightedEdge e5 = graph.addEdge("2", "6");
-        graph.setEdgeWeight(e5, 0.075);
-
-        DefaultWeightedEdge e6 = graph.addEdge("3", "1");
-        graph.setEdgeWeight(e6, 1);
-
-        DefaultWeightedEdge e7 = graph.addEdge("4", "1");
-        graph.setEdgeWeight(e7, 0.7);
-
-        DefaultWeightedEdge e8 = graph.addEdge("4", "5");
-        graph.setEdgeWeight(e8, 0.15);
-
-        DefaultWeightedEdge e9 = graph.addEdge("4", "6");
-        graph.setEdgeWeight(e9, 0.15);
-
-        DefaultWeightedEdge e10 = graph.addEdge("5", "1");
-        graph.setEdgeWeight(e10, 1);
-
-        DefaultWeightedEdge e11 = graph.addEdge("6", "6");
-        graph.setEdgeWeight(e11, 1);
+//        graph.addVertex("1");
+//        graph.addVertex("2");
+//        graph.addVertex("3");
+//        graph.addVertex("4");
+//        graph.addVertex("5");
+//        graph.addVertex("6");
+//
+//        DefaultWeightedEdge e0 = graph.addEdge("1", "1");
+//        graph.setEdgeWeight(e0, 0.72);
+//
+//        DefaultWeightedEdge e1 = graph.addEdge("1", "2");
+//        graph.setEdgeWeight(e1, 0.18);
+//
+//        DefaultWeightedEdge e4 = graph.addEdge("1", "4");
+//        graph.setEdgeWeight(e4, 0.1);
+//
+//        DefaultWeightedEdge e2 = graph.addEdge("2", "1");
+//        graph.setEdgeWeight(e2, 0.85);
+//
+//        DefaultWeightedEdge e3 = graph.addEdge("2", "3");
+//        graph.setEdgeWeight(e3, 0.075);
+//
+//        DefaultWeightedEdge e5 = graph.addEdge("2", "6");
+//        graph.setEdgeWeight(e5, 0.075);
+//
+//        DefaultWeightedEdge e6 = graph.addEdge("3", "1");
+//        graph.setEdgeWeight(e6, 1);
+//
+//        DefaultWeightedEdge e7 = graph.addEdge("4", "1");
+//        graph.setEdgeWeight(e7, 0.7);
+//
+//        DefaultWeightedEdge e8 = graph.addEdge("4", "5");
+//        graph.setEdgeWeight(e8, 0.15);
+//
+//        DefaultWeightedEdge e9 = graph.addEdge("4", "6");
+//        graph.setEdgeWeight(e9, 0.15);
+//
+//        DefaultWeightedEdge e10 = graph.addEdge("5", "1");
+//        graph.setEdgeWeight(e10, 1);
+//
+//        DefaultWeightedEdge e11 = graph.addEdge("6", "6");
+//        graph.setEdgeWeight(e11, 1);
+//
+//        System.out.println(graph);
 
 //        graph.addVertex("0");
 //        graph.addVertex("1");
@@ -119,8 +142,9 @@ public class Main {
 
         String startVertex = "1";
         graph.removeAllEdges(startVertex, startVertex);
+        graph.removeAllEdges("2", "6");
 
-        var paths = graphAnalize.getListAllPaths(graph, "1", "6");
+        var paths = graphAnalize.getListAllPaths(graph, startVertex, "6");
         System.out.println(paths);
 
         Map<GraphPath<String, DefaultWeightedEdge>, Double> pathMap = new HashMap<>();
@@ -135,7 +159,7 @@ public class Main {
             pathMap.put(path, weightFinal);
         }
 
-        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()){
+        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()) {
             System.out.println(entry);
         }
 
@@ -192,11 +216,11 @@ public class Main {
                     .toList();
 
             double edgeWeight = 1.0;
-            for (var k : path.getEdgeList()){
+            for (var k : path.getEdgeList()) {
                 edgeWeight *= graph.getEdgeWeight(k);
             }
 
-            if (loopsNotInPath.isEmpty()){
+            if (loopsNotInPath.isEmpty()) {
                 chislitel += edgeWeight;
             } else {
                 for (DefaultWeightedEdge loop : loopsNotInPath) {
@@ -219,6 +243,21 @@ public class Main {
         // Находим все циклы в графе  с помощью алгоритма Джонсона
         JohnsonSimpleCycles<String, DefaultWeightedEdge> cycleFinder = new JohnsonSimpleCycles<>(graphCopy);
         List<List<String>> allCycles = cycleFinder.findSimpleCycles();
+        System.out.println(allCycles);
+
+//        List<List<String>> loops = new ArrayList<>();
+//        for (DefaultWeightedEdge edge : graphCopy.edgeSet()) {
+//            if (graphCopy.getEdgeSource(edge).equals(graphCopy.getEdgeTarget(edge))) {
+//                String vertex = graphCopy.getEdgeSource(edge);
+//                loops.add(Arrays.asList(vertex, vertex));
+//            }
+//        }
+//        List<DefaultWeightedEdge> loops = new ArrayList<>();
+//        for (DefaultWeightedEdge edge : graphCopy.edgeSet()) {
+//            if (graphCopy.getEdgeSource(edge).equals(graphCopy.getEdgeTarget(edge))) {
+//                loops.add(edge);
+//            }
+//        }
 
         Map<List<String>, Double> cycleWeights = new HashMap<>();
         double ans1 = 0;
@@ -242,12 +281,12 @@ public class Main {
         var test = new NonTouchingCyclesFinder(cycleWeights);
 
         double a1 = 0;
-        for (var k : test.findNonTouchingCycleGroups(2)){
+        for (var k : test.findNonTouchingCycleGroups(2)) {
             a1 += k;
         }
 
         double a2 = 0;
-        for (var k : test.findNonTouchingCycleGroups(3)){
+        for (var k : test.findNonTouchingCycleGroups(3)) {
             a2 += k;
         }
 
