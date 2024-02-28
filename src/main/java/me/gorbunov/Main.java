@@ -3,7 +3,7 @@ package me.gorbunov;
 import me.gorbunov.dto.GraphVertex;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
-import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
+import org.jgrapht.alg.cycle.TarjanSimpleCycles;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DirectedWeightedPseudograph;
@@ -40,8 +40,8 @@ public class Main {
             // Устанавливаем вес (для нового или существующего ребра)
             graph.setEdgeWeight(edge, weight);
         }
-//
-//        System.out.println(graph);
+
+        System.out.println(graph);
 
 
 //        graph.addVertex("1");
@@ -240,28 +240,13 @@ public class Main {
         List<String> verticesInPath2 = new ArrayList<>(vertexSet);
         verticesInPath2.removeAll(dangerousVertices);
 
-        // Находим все циклы в графе  с помощью алгоритма Джонсона
-        JohnsonSimpleCycles<String, DefaultWeightedEdge> cycleFinder = new JohnsonSimpleCycles<>(graphCopy);
+        // Находим все циклы в графе
+        TarjanSimpleCycles<String, DefaultWeightedEdge> cycleFinder = new TarjanSimpleCycles<>(graphCopy);
         List<List<String>> allCycles = cycleFinder.findSimpleCycles();
-        System.out.println(allCycles);
-
-//        List<List<String>> loops = new ArrayList<>();
-//        for (DefaultWeightedEdge edge : graphCopy.edgeSet()) {
-//            if (graphCopy.getEdgeSource(edge).equals(graphCopy.getEdgeTarget(edge))) {
-//                String vertex = graphCopy.getEdgeSource(edge);
-//                loops.add(Arrays.asList(vertex, vertex));
-//            }
-//        }
-//        List<DefaultWeightedEdge> loops = new ArrayList<>();
-//        for (DefaultWeightedEdge edge : graphCopy.edgeSet()) {
-//            if (graphCopy.getEdgeSource(edge).equals(graphCopy.getEdgeTarget(edge))) {
-//                loops.add(edge);
-//            }
-//        }
 
         Map<List<String>, Double> cycleWeights = new HashMap<>();
         double ans1 = 0;
-        for (List<String> cycle : allCycles) {
+        for (var cycle : allCycles) {
             double weight = 1;
             if (cycle.retainAll(verticesInPath2)) {
                 continue; // проверка на наличие на пути и опасное состояние.
