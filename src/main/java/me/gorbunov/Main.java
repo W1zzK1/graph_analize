@@ -1,9 +1,10 @@
 package me.gorbunov;
 
+import me.gorbunov.algorithms.Chislitel;
+import me.gorbunov.algorithms.Znamenatel;
 import me.gorbunov.dto.GraphVertex;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
-import org.jgrapht.alg.cycle.TarjanSimpleCycles;
 import org.jgrapht.alg.shortestpath.AllDirectedPaths;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.DirectedWeightedPseudograph;
@@ -142,185 +143,20 @@ public class Main {
 
         String startVertex = "1";
         graph.removeAllEdges(startVertex, startVertex);
-        graph.removeAllEdges("2", "6");
+        graph.removeAllEdges("2", "6"); // в данном случае удалено, потому что "слишком частая вероятность"
 
-        var paths = graphAnalize.getListAllPaths(graph, startVertex, "6");
-        System.out.println(paths);
-
-        Map<GraphPath<String, DefaultWeightedEdge>, Double> pathMap = new HashMap<>();
-
-        for (GraphPath<String, DefaultWeightedEdge> path : paths) {
-            double weightFinal = 1.0;
-            List<DefaultWeightedEdge> edgesInPath = path.getEdgeList();
-            for (DefaultWeightedEdge edge : edgesInPath) {
-                double weight = graph.getEdgeWeight(edge);
-                weightFinal *= weight;
-            }
-            pathMap.put(path, weightFinal);
-        }
-
-        for (Map.Entry<GraphPath<String, DefaultWeightedEdge>, Double> entry : pathMap.entrySet()) {
-            System.out.println(entry);
-        }
-
-        // ребра и вершины на пути
-        List<String> verticesInPath = paths.stream()
-                .flatMap(p -> p.getVertexList().stream())
-                .toList();
-        List<DefaultWeightedEdge> edgesInPath = paths.stream()
-                .flatMap(p -> p.getEdgeList().stream())
-                .toList();
-//
-//        System.out.println(verticesInPath);
-//        System.out.println(edgesInPath);
-//
-//        // Получить все вершины и ребра, которые не находятся на пути
-//        List<String> verticesNotInPath = graph.vertexSet().stream()
-//                .filter(v -> !verticesInPath.contains(v))
-//                .toList();
-//        List<DefaultWeightedEdge> edgesNotInPath = graph.edgeSet().stream()
-//                .filter(e -> !edgesInPath.contains(e))
-//                .toList();
-//
-//        System.out.println("Vertices not in path: " + verticesNotInPath);
-//        System.out.println("Edges not in path: " + edgesNotInPath);
-//
-//        Set<DefaultWeightedEdge> edgeSets = new HashSet<>(edgesNotInPath);
-
-
-        // Получить все петли в графе
-        List<DefaultWeightedEdge> allLoops = graph.edgeSet().stream()
-                .filter(e -> graph.getEdgeSource(e).equals(graph.getEdgeTarget(e)))
-                .toList();
-
-        // Определить опасные вершины
         List<String> dangerousVertices = Arrays.asList("6");
-//        List<String> dangerousVertices = Arrays.asList("4", "5");
-        Map<DefaultWeightedEdge, Double> weigthList = new HashMap<>();
 
-        double chislitel = 0;
+        Chislitel foo = new Chislitel();
+        double chislitel = foo.FindChislitel(graph, startVertex, "6");
 
-        for (GraphPath<String, DefaultWeightedEdge> path : paths) {
-            System.out.println(path);
-            // Получить все вершины на данном пути
-            List<String> verticesInPath1 = path.getVertexList();
+        Znamenatel baz = new Znamenatel();
+        double znamenatel = baz.findZnamenatel(graphCopy, dangerousVertices);
 
-            // Получить все петли, которые находятся на данном пути или касаются вершин на данном пути
-            List<DefaultWeightedEdge> loopsInPath = allLoops.stream()
-                    .filter(loop -> verticesInPath1.contains(graph.getEdgeSource(loop)))
-                    .toList();
-            System.out.println("все петли на данном пути = " + loopsInPath);
-            // Получить все петли, которые не находятся на данном пути и не касаются вершин на данном пути
-            List<DefaultWeightedEdge> loopsNotInPath = allLoops.stream()
-                    .filter(loop -> !loopsInPath.contains(loop) && !dangerousVertices.contains(graph.getEdgeSource(loop)))
-                    .toList();
 
-            double edgeWeight = 1.0;
-            for (var k : path.getEdgeList()) {
-                edgeWeight *= graph.getEdgeWeight(k);
-            }
-
-            if (loopsNotInPath.isEmpty()) {
-                chislitel += edgeWeight;
-            } else {
-                for (DefaultWeightedEdge loop : loopsNotInPath) {
-                    System.out.println("зашел в цикл");
-                    double weight = graph.getEdgeWeight(loop);
-                    weigthList.put(loop, 1 - weight);
-                    System.out.println("Weight of loop " + loop + " = " + weight);
-                    chislitel += edgeWeight * (1 - weight);
-                }
-            }
-        }
-
-        /// Поиск знаменателя
-        Set<String> vertexSet = graphCopy.vertexSet();
-
-        // преобразование набора вершин в список
-        List<String> verticesInPath2 = new ArrayList<>(vertexSet);
-        verticesInPath2.removeAll(dangerousVertices);
-
-        // Находим все циклы в графе
-        TarjanSimpleCycles<String, DefaultWeightedEdge> cycleFinder = new TarjanSimpleCycles<>(graphCopy);
-        List<List<String>> allCycles = cycleFinder.findSimpleCycles();
-
-        Map<List<String>, Double> cycleWeights = new HashMap<>();
-        double ans1 = 0;
-        for (var cycle : allCycles) {
-            double weight = 1;
-            if (cycle.retainAll(verticesInPath2)) {
-                continue; // проверка на наличие на пути и опасное состояние.
-            }
-            for (int i = 0; i < cycle.size() - 1; i++) {
-                DefaultWeightedEdge edge = graphCopy.getEdge(cycle.get(i), cycle.get(i + 1));
-                weight *= graphCopy.getEdgeWeight(edge);
-            }
-            // Добавьте вес последнего ребра в цикле
-            DefaultWeightedEdge lastEdge = graphCopy.getEdge(cycle.get(cycle.size() - 1), cycle.get(0));
-            weight *= graphCopy.getEdgeWeight(lastEdge);
-
-            System.out.println("Вес цикла: " + weight + " сам цикл: " + cycle);
-            cycleWeights.put(cycle, weight);
-            ans1 += weight;
-        }
-        var test = new NonTouchingCyclesFinder(cycleWeights);
-
-        double a1 = 0;
-        for (var k : test.findNonTouchingCycleGroups(2)) {
-            a1 += k;
-        }
-
-        double a2 = 0;
-        for (var k : test.findNonTouchingCycleGroups(3)) {
-            a2 += k;
-        }
-
-        // final
-        double znamenatel = 1 - ans1 + a1 - a2;
         System.out.println("числитель = " + chislitel + ", Знаменатель = " + znamenatel);
         String result = String.format("%.2f", chislitel / znamenatel);
         System.out.print(result);
-    }
-
-    public static class NonTouchingCyclesFinder {
-        private Map<List<String>, Double> cycleWeights;
-        private List<List<String>> cycles;
-        private List<Set<String>> cycleVertexSets;
-
-        public NonTouchingCyclesFinder(Map<List<String>, Double> cycleWeights) {
-            this.cycleWeights = cycleWeights;
-            this.cycles = new ArrayList<>(cycleWeights.keySet());
-            this.cycleVertexSets = new ArrayList<>();
-            for (List<String> cycle : cycles) {
-                this.cycleVertexSets.add(new HashSet<>(cycle));
-            }
-        }
-
-        public List<Double> findNonTouchingCycleGroups(int groupSize) {
-            List<Double> products = new ArrayList<>();
-            findNonTouchingCycleGroups(new ArrayList<>(), new HashSet<>(), 0, groupSize, products);
-            return products;
-        }
-
-        private void findNonTouchingCycleGroups(List<Integer> currentGroup, Set<String> currentVertices, int start, int groupSize, List<Double> products) {
-            if (currentGroup.size() == groupSize) {
-                double product = 1;
-                for (int index : currentGroup) {
-                    product *= cycleWeights.get(cycles.get(index));
-                }
-                products.add(product);
-            } else {
-                for (int i = start; i < cycles.size(); i++) {
-                    if (Collections.disjoint(currentVertices, cycleVertexSets.get(i))) {
-                        currentGroup.add(i);
-                        currentVertices.addAll(cycleVertexSets.get(i));
-                        findNonTouchingCycleGroups(currentGroup, currentVertices, i + 1, groupSize, products);
-                        currentGroup.remove(currentGroup.size() - 1);
-                        currentVertices.removeAll(cycleVertexSets.get(i));
-                    }
-                }
-            }
-        }
     }
 
     public static class GraphAnalize {
@@ -348,15 +184,6 @@ public class Main {
                 graphCopy.setEdgeWeight(edgeCopy, weight);
             }
             return graphCopy;
-        }
-
-        public List<GraphPath<String, DefaultWeightedEdge>> getListAllPaths(Graph<String, DefaultWeightedEdge> graph, String startVertex, String targetVertex) {
-            AllDirectedPaths<String, DefaultWeightedEdge> allPaths = new AllDirectedPaths<>(graph);
-            return allPaths.getAllPaths(
-                    startVertex,
-                    targetVertex,
-                    true,
-                    null);
         }
     }
 }
