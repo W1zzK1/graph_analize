@@ -11,7 +11,7 @@ public class DAO {
     private Connection c = null;
     private Statement stmt = null;
 
-    private ResultSet setConnection(){
+    private ResultSet setConnection() {
         try {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection(DB_URL);
@@ -20,27 +20,11 @@ public class DAO {
 
             stmt = c.createStatement();
             return stmt.executeQuery("SELECT * FROM main_edges;");
-//            while (rs.next()) {
-////                int id = rs.getInt("id");
-////                int out_vertex = rs.getInt("out");
-////                int to_vertex = rs.getInt("to");
-////                float weigth = rs.getFloat("weigth");
-////
-////                System.out.println("id - " + id);
-////                System.out.println("out_vertex - " + out_vertex);
-////                System.out.println("to_vertex - " + to_vertex);
-////                System.out.println("weigth - " + weigth);
-////                System.out.println("**********************");
-//        }
-//        rs.close();
-//        stmt.close();
-//        c.close();
-    } catch (Exception e) {
-        System.err.println(e.getClass().getName() + ": " + e.getMessage());
-        System.exit(0);
-    }
-        System.out.println("Operation done successfully");
-        return null;
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+            return null;
+        }
     }
 
     public List<GraphVertex> getAllVertex() {

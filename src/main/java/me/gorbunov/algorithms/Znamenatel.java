@@ -33,7 +33,6 @@ public class Znamenatel {
             DefaultWeightedEdge lastEdge = graphCopy.getEdge(cycle.get(cycle.size() - 1), cycle.get(0));
             weight *= graphCopy.getEdgeWeight(lastEdge);
 
-            System.out.println("Вес цикла: " + weight + " сам цикл: " + cycle);
             cycleWeights.put(cycle, weight);
             ans1 += weight;
         }

@@ -20,7 +20,7 @@ public class Chislitel {
                 null);
     }
 
-    public double FindChislitel(Graph<String, DefaultWeightedEdge> graph, String startVertex, String finishVertex) {
+    public double FindChislitel(Graph<String, DefaultWeightedEdge> graph, String startVertex, String finishVertex, List<String> dangerousVertices) {
         Map<GraphPath<String, DefaultWeightedEdge>, Double> pathMap = new HashMap<>();
         List<GraphPath<String, DefaultWeightedEdge>> paths = getListAllPaths(graph, startVertex, finishVertex);
 
@@ -39,14 +39,12 @@ public class Chislitel {
                 .toList();
 
         // Определить опасные вершины
-        List<String> dangerousVertices = Arrays.asList("6");
-//        List<String> dangerousVertices = Arrays.asList("4", "5");
         Map<DefaultWeightedEdge, Double> weigthList = new HashMap<>();
 
         double chislitel = 0;
 
         for (GraphPath<String, DefaultWeightedEdge> path : paths) {
-            System.out.println(path);
+//            System.out.println(path);
             // Получить все вершины на данном пути
             List<String> verticesInPath1 = path.getVertexList();
 
@@ -54,7 +52,7 @@ public class Chislitel {
             List<DefaultWeightedEdge> loopsInPath = allLoops.stream()
                     .filter(loop -> verticesInPath1.contains(graph.getEdgeSource(loop)))
                     .toList();
-            System.out.println("все петли на данном пути = " + loopsInPath);
+//            System.out.println("все петли на данном пути = " + loopsInPath);
             // Получить все петли, которые не находятся на данном пути и не касаются вершин на данном пути
             List<DefaultWeightedEdge> loopsNotInPath = allLoops.stream()
                     .filter(loop -> !loopsInPath.contains(loop) && !dangerousVertices.contains(graph.getEdgeSource(loop)))
@@ -69,10 +67,10 @@ public class Chislitel {
                 chislitel += edgeWeight;
             } else {
                 for (DefaultWeightedEdge loop : loopsNotInPath) {
-                    System.out.println("зашел в цикл");
+//                    System.out.println("зашел в цикл");
                     double weight = graph.getEdgeWeight(loop);
                     weigthList.put(loop, 1 - weight);
-                    System.out.println("Weight of loop " + loop + " = " + weight);
+//                    System.out.println("Weight of loop " + loop + " = " + weight);
                     chislitel += edgeWeight * (1 - weight);
                 }
             }
