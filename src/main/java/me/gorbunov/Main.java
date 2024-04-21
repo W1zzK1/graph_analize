@@ -57,7 +57,9 @@ public class Main {
             edgesMap.put(edge, graph.getEdgeWeight(edge));
         }
 
-        //graphAnalize.changeWeights(graphCopy, "1", "1", 0.65F);
+//        System.out.println(graphCopy.getEdgeWeight(graphCopy.getEdge("1", "1")) + " hfafhf");
+        graphAnalize.changeWeights(graphCopy, "1", "1", 0.65F);
+//        System.out.println(graphCopy.getEdgeWeight(graphCopy.getEdge("1", "1")) + " fljsfsjfsf");
 
 
 

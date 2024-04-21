@@ -7,51 +7,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DAO {
-    private static final String DB_URL = "jdbc:sqlite:C:/Users/user/sqlite/graph.db";
-    private Connection c = null;
-    private Statement stmt = null;
-
-    private ResultSet setConnection() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection(DB_URL);
-            c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
-
-            stmt = c.createStatement();
-            return stmt.executeQuery("SELECT * FROM main_edges;");
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-            return null;
-        }
-    }
+    private static final String DB_URL = "jdbc:postgresql://localhost:5432/test";
+    private static final String DB_USER = "test";
+    private static final String DB_PASSWORD = "test";
 
     public List<GraphVertex> getAllVertex() {
         List<GraphVertex> vertexList = new ArrayList<>();
-        try (Connection c = DriverManager.getConnection(DB_URL);
-             Statement stmt = c.createStatement();
-             ResultSet resultSet = stmt.executeQuery("SELECT * FROM main_edges;")) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM main_edges;")) {
 
-            c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+            connection.setAutoCommit(false);
+            System.out.println("База данных успешно открыта");
 
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 int out_vertex = resultSet.getInt("out");
-                int to_vertex = resultSet.getInt("to");
-                float weigth = resultSet.getFloat("weigth");
+                int to_vertex = resultSet.getInt("too");
+                float weight = resultSet.getFloat("weight");
 
-                vertexList.add(new GraphVertex(
-                        id,
-                        out_vertex,
-                        to_vertex,
-                        weigth));
+                vertexList.add(new GraphVertex(id, out_vertex, to_vertex, weight));
             }
+            connection.commit();
         } catch (SQLException e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }
-        System.out.println("Operation done successfully");
         return vertexList;
     }
 }
