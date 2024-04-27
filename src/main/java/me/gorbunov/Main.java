@@ -45,6 +45,11 @@ public class Main {
         var graphCopy = graphAnalize.cloneGraph(graph);
 
         String startVertex = "1";
+
+        System.out.println(graph.getEdgeWeight(graph.getEdge("4", "1")) + " hfafhf");
+        graphAnalize.changeWeights(graph, "4", "1", 0.65F);
+        System.out.println(graph.getEdgeWeight(graph.getEdge("4", "1")) + " fljsfsjfsf");
+
         graph.removeAllEdges(startVertex, startVertex);
         graph.removeAllEdges("2", "6"); // в данном случае удалено, потому что "слишком частая вероятность"
 
@@ -56,12 +61,6 @@ public class Main {
         for (DefaultWeightedEdge edge : a) {
             edgesMap.put(edge, graph.getEdgeWeight(edge));
         }
-
-//        System.out.println(graphCopy.getEdgeWeight(graphCopy.getEdge("1", "1")) + " hfafhf");
-        graphAnalize.changeWeights(graphCopy, "1", "1", 0.65F);
-//        System.out.println(graphCopy.getEdgeWeight(graphCopy.getEdge("1", "1")) + " fljsfsjfsf");
-
-
 
         Chislitel foo = new Chislitel();
         double chislitel = foo.FindChislitel(graph, startVertex, "6", dangerousVertices);

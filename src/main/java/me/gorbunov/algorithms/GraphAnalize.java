@@ -67,6 +67,7 @@ public class GraphAnalize {
         Set<DefaultWeightedEdge> edges = graph.outgoingEdgesOf(startVertex);
         Set<DefaultWeightedEdge> mutableCopyEdges = new HashSet<>(edges);
         float oldWeight = (float) graph.getEdgeWeight(edge);
+        graph.setEdgeWeight(edge, newWeight);
         float raznitsa = oldWeight - newWeight;
         DefaultWeightedEdge qq = findElementInSet(mutableCopyEdges, edge);
         deleteEdge(mutableCopyEdges, qq);
@@ -75,6 +76,7 @@ public class GraphAnalize {
     }
 
     private void findAndSetNewWeights(Graph<String, DefaultWeightedEdge> graph, Set<DefaultWeightedEdge> set, float oldWeight, float raznitsa, float total) {
+        System.out.println(set);
         for (DefaultWeightedEdge i : set) {
             float p = (float) graph.getEdgeWeight(i);
             System.out.println(p + " ^ " + (p / total) + " ^ " + raznitsa);
